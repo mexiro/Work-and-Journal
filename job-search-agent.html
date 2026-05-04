@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>The Job Search Agent — Erion's Builds</title>
+<meta name="description" content="An always-on agent that reads job alerts, scores them against a rubric, and posts a ranked digest to Notion. Replication guide with a worked example for a junior dev in Berlin." />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="shell">
+
+  <header class="topnav">
+    <a class="brand" href="index.html">Erion's <em>Builds</em></a>
+    <nav>
+      <a href="index.html">Index</a>
+      <a href="https://mexiro.github.io/erionmaxhari" target="_blank" rel="noopener">About</a>
+    </nav>
+  </header>
+
+  <article>
+
+    <header class="article-head">
+      <div class="kicker">Build No. 01 · Career Agent</div>
+      <h1>The Job Search Agent <em>that actually reads.</em></h1>
+      <p class="standfirst">Most job alerts go straight to the trash. This agent reads them for you, scores each role against a rubric you write once, and drops a ranked shortlist into Notion twice a week. I built it for my wife. The worked example here is a junior developer trying to land their first role in Berlin.</p>
+      <div class="byline">
+        <span>By Erion Maxhari</span>
+        <span>30-min setup</span>
+        <span>Free if you have Claude + Gmail + Notion</span>
+      </div>
+    </header>
+
+    <nav class="toc">
+      <h4>On this page</h4>
+      <ol>
+        <li><a href="#what">What it does</a></li>
+        <li><a href="#who">Who this is for</a></li>
+        <li><a href="#stack">The stack — and why this stack</a></li>
+        <li><a href="#fast">The 5-minute version</a></li>
+        <li><a href="#full">The 30-minute version</a></li>
+        <li><a href="#rubric">Designing the scoring rubric</a></li>
+        <li><a href="#example">Worked example: junior dev, Berlin</a></li>
+        <li><a href="#digest">The Notion digest format</a></li>
+        <li><a href="#tuning">Tuning, drift, and when to scrap it</a></li>
+        <li><a href="#limits">What this won't do</a></li>
+      </ol>
+    </nav>
+
+    <div class="body read">
+
+      <section id="what">
+        <h2><span class="num">01</span>What it does</h2>
+        <p>You sign up for job alerts on LinkedIn, StepStone, Indeed, Xing — the usual suspects. They flood your inbox. You skim a handful, file the rest under "I'll look later," and never look later.</p>
+        <p>This agent intercepts those alerts. It reads each job description, scores it against a rubric you wrote in plain language ("score higher if commute is under 40 minutes, lower if it requires 5+ years experience"), and twice a week posts a digest to Notion that looks like this:</p>
+
+        <div class="digest" aria-hidden="true">
+          <div class="digest-head">
+            <span class="title">Job digest · Mon morning</span>
+            <span class="date">Mon 04 May</span>
+          </div>
+          <div class="job">
+            <div class="job-head">
+              <span class="role">Junior Frontend Developer · Solarisbank</span>
+              <span class="score high">87 / 100</span>
+            </div>
+            <div class="meta">Berlin-Mitte · 4 km · €48–55k · Hybrid 2 days</div>
+            <div class="why">Strong match: React + TS stack, explicit junior-friendly language ("first or second role"), commute under your 40-min cap. Mentorship program advertised.</div>
+          </div>
+          <div class="job">
+            <div class="job-head">
+              <span class="role">Web Developer · Zalando</span>
+              <span class="score med">62 / 100</span>
+            </div>
+            <div class="meta">Berlin-Friedrichshain · 9 km · Salary not stated · Hybrid</div>
+            <div class="why">Mid-level role but description says "open to strong juniors with portfolio." Tech stack matches. Worth applying with a tailored cover letter.</div>
+          </div>
+          <div class="job">
+            <div class="job-head">
+              <span class="role">Senior React Engineer · N26</span>
+              <span class="score low">28 / 100</span>
+            </div>
+            <div class="meta">Berlin-Mitte · 6 km · €75–95k · Hybrid</div>
+            <div class="why">Filtered out: 5+ years required, "senior" level. Skip unless you want a stretch application for visibility.</div>
+          </div>
+        </div>
+
+        <p>That's it. No new app. No browser extension. Email comes in, digest goes out.</p>
+      </section>
+
+      <section id="who">
+        <h2><span class="num">02</span>Who this is for</h2>
+        <ul>
+          <li><strong>Job seekers who get more alerts than they can read.</strong> If you're staring at 30 unread "5 new jobs for you" emails, this fixes that.</li>
+          <li><strong>People who know what they want but can't filter for it.</strong> Job boards filter by keyword; you need to filter by judgement ("would I actually apply to this?"). The agent does the second part.</li>
+          <li><strong>Anyone willing to write a 200-word rubric once.</strong> The setup is simple. The thinking is the work.</li>
+        </ul>
+        <p>If you're not sure what you want yet, build the agent anyway — its low-scoring rejections will teach you what you don't want, which is half the battle.</p>
+      </section>
+
+      <section id="stack">
+        <h2><span class="num">03</span>The stack — and why this stack</h2>
+        <p>Three pieces, all free or near-free:</p>
+        <ul>
+          <li><strong>Gmail</strong> — where the alerts arrive. A label routes them to the agent.</li>
+          <li><strong>Claude</strong> (with the Gmail and Notion connectors enabled) — the brain that reads, scores, and writes.</li>
+          <li><strong>Notion</strong> — where the digest lives. A simple page with a date heading per run.</li>
+        </ul>
+        <p>You can swap pieces. Outlook works instead of Gmail. Obsidian or a plain markdown file works instead of Notion. The pattern is what matters: <strong>label → agent → digest</strong>.</p>
+        <div class="callout">
+          <strong>Why not a custom script?</strong>
+          You could write Python that hits the Gmail API, runs an LLM call, posts to a Notion DB. It would be more reliable and harder to break. But it's also a project. This guide assumes you'd rather have it running by tonight than perfect by Christmas.
+        </div>
+      </section>
+
+      <section id="fast">
+        <h2><span class="num">04</span>The 5-minute version</h2>
+        <p>Before the full setup, try this. Open Claude. Forward yourself a job alert email. Then paste this prompt with the email pasted underneath:</p>
+
+<pre><code>You are a job-matching agent for a <span class="key">[junior frontend developer]</span> based
+in <span class="key">[Berlin-Tempelhof]</span>, looking for their first role.
+
+Score each job in the email below from 0–100 using this rubric:
+  - Match to "junior" or "entry-level" framing       (35 points)
+  - Tech stack overlap with React, TypeScript, HTML  (25 points)
+  - Commute under 40 minutes by public transit       (20 points)
+  - Salary disclosed and >= €40k                     (10 points)
+  - Mentorship, training, or junior program          (10 points)
+
+Output a markdown table: Role | Company | Score | One-line reason.
+Skip jobs scoring below 40 unless they're worth a stretch application.</code></pre>
+
+        <p>Hit send. You'll get a scored shortlist in 10 seconds.</p>
+        <p>If that output is useful, the rest of this guide is just <em>making it run automatically twice a week</em>. If the output is bad, the rubric needs work — go to <a href="#rubric">section 6</a> first.</p>
+      </section>
+
+      <section id="full">
+        <h2><span class="num">05</span>The 30-minute version</h2>
+        <p>The goal: alerts arrive Sunday and Wednesday nights. By Monday and Thursday morning, a digest is waiting in Notion. You only open Notion.</p>
+
+        <ol class="steps">
+
+          <li>
+            <strong>Set up a Gmail label and filter.</strong>
+            In Gmail, create a label called <code>Jobs/Alerts</code>. Then create a filter: <em>From: linkedin.com OR stepstone.de OR indeed.de OR xing.com</em> → apply label <code>Jobs/Alerts</code>, mark as read (so they don't clutter your inbox). Sign up for daily digests on each platform, with the keywords you actually care about. Don't over-filter at the platform level — let the agent do the filtering.
+          </li>
+
+          <li>
+            <strong>Create the Notion destination.</strong>
+            In Notion, make a new page called <em>Job Digest</em>. That's it. The agent will append dated sections to it.
+          </li>
+
+          <li>
+            <strong>Connect Claude to Gmail and Notion.</strong>
+            In Claude, go to Settings → Connectors. Enable Gmail and Notion. Authorise both. (If you don't see these, you may need a Pro plan — check the pricing page.)
+          </li>
+
+          <li>
+            <strong>Write your scoring rubric.</strong>
+            This is the only part that's actually hard. See <a href="#rubric">section 6</a>. Write it once, save it as a Notion page or a doc you can paste from.
+          </li>
+
+          <li>
+            <strong>Build the agent prompt.</strong>
+            Combine your rubric with this scaffold:
+<pre><code>You are my job-search agent. Your job runs twice a week.
+
+WHAT TO READ:
+Search Gmail for emails with label "Jobs/Alerts" received
+in the last 4 days. Read all job listings inside.
+
+WHO I AM AND WHAT I WANT:
+[Paste your full rubric here — see section 6]
+
+WHAT TO DO:
+1. Extract every distinct job posting (deduplicate cross-postings).
+2. Score each from 0–100 using the rubric.
+3. Sort highest to lowest.
+4. For each job scoring 40+, write a one-paragraph "why" in plain
+   language — explain the fit AND any caveats.
+5. Group results: "Strong matches" (70+), "Worth applying" (50–69),
+   "Stretch / skip" (40–49).
+6. Append the result as a new section to the Notion page titled
+   "Job Digest", with today's date as the section heading.
+
+TONE:
+Direct. No filler. If a role is a bad fit, say so in one sentence.</code></pre>
+          </li>
+
+          <li>
+            <strong>Run it manually first.</strong>
+            Paste the prompt into Claude with both connectors active. Watch what it does. Read the Notion output. Tune the rubric — it will be wrong on the first run.
+          </li>
+
+          <li>
+            <strong>Schedule it.</strong>
+            Two ways. The cleanest: use Claude's scheduled-task feature if your plan supports it (check Settings). The pragmatic alternative: set a recurring Mon/Thu 8:30 AM reminder on your phone titled "Run job digest" with a Claude.ai link — paste the prompt, hit send, get coffee. Takes 15 seconds.
+          </li>
+
+        </ol>
+      </section>
+
+      <section id="rubric">
+        <h2><span class="num">06</span>Designing the scoring rubric</h2>
+        <p>The rubric is the whole game. A bad rubric scores everything 70 and the digest is noise. A good rubric ranks ten jobs and the top three are obvious applies.</p>
+
+        <h3>Three rules</h3>
+        <p><strong>One: weights must add to 100.</strong> Forces you to choose what matters most. If "junior-friendly framing" is 35 points and "salary" is 10, you've made a real decision.</p>
+        <p><strong>Two: every criterion must be observable in a job description.</strong> "Good company culture" is unscoreable. "Mentions mentorship, training program, or pair programming" is scoreable.</p>
+        <p><strong>Three: include at least one disqualifier.</strong> A criterion that, if missing, caps the score. For a junior, "requires 5+ years experience" should hard-cap the score around 30. For someone with kids, "fully on-site, no remote at all" might cap it.</p>
+
+        <h3>The template</h3>
+<pre><code>WHO I AM
+[2–3 sentences. Role, location, level, what you're optimising for.]
+
+DEAL-BREAKERS (auto-cap at 30)
+- [Thing that makes a job impossible for you]
+- [Another one]
+
+SCORING (must total 100)
+- [Criterion 1]                                    (X points)
+- [Criterion 2]                                    (X points)
+- [Criterion 3]                                    (X points)
+- [Criterion 4]                                    (X points)
+- [Criterion 5]                                    (X points)
+
+BONUS POINTS (up to +10, can push past 100)
+- [Things that delight you when you see them]
+
+NEVER SCORE ABOVE 50 IF
+- [Conditions that signal a poor fit even if other criteria match]</code></pre>
+      </section>
+
+      <section id="example">
+        <h2><span class="num">07</span>Worked example: junior dev, Berlin</h2>
+        <p>Meet our hypothetical user. Alex, 24, finished a 9-month bootcamp last autumn. Knows React, TypeScript, basic Node. No professional experience yet, two portfolio projects on GitHub. Lives in Neukölln, doesn't own a car, wants to be in an office at least 3 days a week ("I'll go mad working alone in my room"). Berlin only.</p>
+        <p>Here's Alex's filled-in rubric:</p>
+
+<pre><code>WHO I AM
+Junior frontend dev, Berlin-Neukölln, looking for first
+professional role. Bootcamp graduate, two portfolio projects
+shipped. Optimising for: learning environment, in-office
+collaboration, manageable commute. Not optimising for: salary.
+
+DEAL-BREAKERS (auto-cap at 30)
+- Requires 3+ years professional experience
+- 100% remote (I want office time)
+- Outside Berlin, no relocation help
+
+SCORING (totals 100)
+- Junior-friendly framing                          35
+  ("entry-level", "first role", "junior", "graduate", or
+  explicit mention of bootcamp grads being welcome)
+
+- Tech stack match                                 25
+  Full match (React + TS): 25
+  Partial (one of them, or Vue/Angular): 15
+  Backend-heavy or unrelated: 0
+
+- Commute from Neukölln under 40 min by transit    20
+  Under 25 min: 20
+  25–40 min: 12
+  40–60 min: 5
+  Over 60 min: 0
+
+- In-office or hybrid (2+ days/week)               10
+  Hybrid 3+ days: 10
+  Hybrid 2 days: 7
+  Hybrid 1 day: 3
+  Fully remote: 0
+
+- Mentorship, training, or junior program          10
+  Explicit program: 10
+  "We support juniors / pair programming": 5
+  Nothing mentioned: 0
+
+BONUS (up to +10)
+- Visa sponsorship advertised: +5
+- German not required: +5
+- Public benefit / climate / education company: +3
+
+NEVER SCORE ABOVE 50 IF
+- Description is vague and lists no concrete tech stack
+- Company has fewer than 10 employees (early-stage risk for a
+  first role; Alex needs structure)</code></pre>
+
+        <h3>How to translate this for yourself</h3>
+        <p>Three substitutions:</p>
+        <ul>
+          <li><strong>"Who I am"</strong> — write the version that's actually true. Two sentences. If you can't write it, you don't know what you want.</li>
+          <li><strong>"Deal-breakers"</strong> — what would make you turn down a job in the first 30 seconds of reading? Those.</li>
+          <li><strong>"Scoring"</strong> — five criteria max. If you have ten, you have noise. Force yourself to choose.</li>
+        </ul>
+        <p>For a senior with kids, the scoring shifts — salary goes from 10 to 30, mentorship drops to 0, "remote OK" might add 15 points instead of subtracting. Same template, different weights. That's the point.</p>
+      </section>
+
+      <section id="digest">
+        <h2><span class="num">08</span>The Notion digest format</h2>
+        <p>Format matters more than people think. A wall of text is unreadable on Monday morning. The format I use:</p>
+        <ul>
+          <li><strong>Date heading</strong> — bold, top of the section.</li>
+          <li><strong>Three buckets</strong>: Strong matches (70+), Worth applying (50–69), Stretch / skip (under 50). I usually only read the first two; the third is there in case I'm wrong about a deal-breaker.</li>
+          <li><strong>Per job</strong>: role + company on one line; score in a small badge; commute distance and salary as a meta line; one paragraph saying <em>why</em> the score is what it is.</li>
+        </ul>
+        <p>The "why" paragraph is where the agent earns its keep. A score is just a number — you can't argue with it. A reason is something you can either accept ("yeah, fair") or override ("the agent missed that this team lead is famously good with juniors, score should be higher"). The reason makes the agent <em>correctable</em>.</p>
+
+        <div class="callout">
+          <strong>Trap to avoid</strong>
+          Don't ask the agent to write the cover letter. Two reasons. One: it'll be generic. Two: writing the cover letter is when you decide whether you actually want the job. Outsource the filtering, not the deciding.
+        </div>
+      </section>
+
+      <section id="tuning">
+        <h2><span class="num">09</span>Tuning, drift, and when to scrap it</h2>
+        <p>The rubric you write in week one will be wrong. Expect this.</p>
+        <p><strong>Week 2: tune the weights.</strong> If everything is scoring 60–80, your rubric is too generous — increase the deal-breakers. If nothing is scoring above 50, you're being too strict — relax one criterion or drop a hard cap.</p>
+        <p><strong>Week 3: add what you missed.</strong> You'll notice you keep mentally rejecting jobs for a reason that's not in the rubric ("I keep skipping anything with 'fast-paced' in the description"). Add it. The rubric is a living document.</p>
+        <p><strong>Week 4: review the strong matches you didn't apply to.</strong> If a job scored 85 and you ignored it, your rubric is rewarding the wrong things. Find the disconnect and fix it.</p>
+        <p><strong>Scrap it when you have a job.</strong> Or scrap it after a month if you're not applying to the high-scoring matches — the problem isn't filtering, it's something else (motivation, fit doubt, CV) and an agent won't fix that.</p>
+      </section>
+
+      <section id="limits">
+        <h2><span class="num">10</span>What this won't do</h2>
+        <ul>
+          <li><strong>It won't apply for you.</strong> By design. Applying is a decision, not a task.</li>
+          <li><strong>It won't find jobs that aren't in your inbox.</strong> Garbage alerts in, garbage digest out. Subscribe broadly.</li>
+          <li><strong>It won't replace networking.</strong> The best jobs are filled before they're posted. The agent helps with the 70% that go through job boards.</li>
+          <li><strong>It won't keep you motivated.</strong> A digest doesn't apply itself. If your problem is "I have 12 high-scoring matches and haven't applied to any," the agent isn't the issue.</li>
+        </ul>
+        <p>That's it. Build it, tune it for two weeks, then forget it's there until you have a job offer.</p>
+        <p style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--rule); font-style: italic; color: var(--ink-muted);">If you build a version of this and it works for you, I'd genuinely like to hear about it. Find me on <a href="https://github.com/mexiro">GitHub</a>.</p>
+      </section>
+
+    </div>
+
+  </article>
+
+</div>
+
+<footer>
+  <span>Erion Maxhari · Berlin</span>
+  <span><a href="index.html">← Back to index</a></span>
+</footer>
+
+</body>
+</html>
