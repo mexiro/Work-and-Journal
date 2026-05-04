@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>The Job Search Agent — Erion's Builds</title>
-<meta name="description" content="An always-on agent that reads job alerts, scores them against a rubric, and posts a ranked digest to Notion. Replication guide with a worked example for a junior dev in Berlin." />
+<meta name="description" content="An always-on agent that reads job alerts, scores them against your rubric, sends you a digest via iMessage, and learns from your feedback. Worked example: junior dev landing their first role in Berlin." />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -24,7 +24,7 @@
     <header class="article-head">
       <div class="kicker">Build No. 01 · Career Agent</div>
       <h1>The Job Search Agent <em>that actually reads.</em></h1>
-      <p class="standfirst">Most job alerts go straight to the trash. This agent reads them for you, scores each role against a rubric you write once, and drops a ranked shortlist into Notion twice a week. I built it for my wife. The worked example here is a junior developer trying to land their first role in Berlin.</p>
+      <p class="standfirst">An always-on agent that reads job alerts in your Gmail, scores each role against a rubric you write once, pushes the top picks to your phone via iMessage twice a week, and learns from your feedback so it gets sharper every run. I built it for my wife. Worked example here: a junior dev landing their first role in Berlin.</p>
       <div class="byline">
         <span>By Erion Maxhari</span>
         <span>30-min setup</span>
@@ -32,19 +32,114 @@
       </div>
     </header>
 
+    <!-- ===== FLOW DIAGRAM — the 5-second version ===== -->
+    <figure class="flow">
+      <figcaption>The flow, in five seconds</figcaption>
+      <svg viewBox="0 0 1100 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram showing the job search agent flow: job boards send alerts to Gmail, Claude reads them with your rubric, sends a digest to Notion and iMessage, you write feedback, the loop improves.">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#056B63"/>
+          </marker>
+          <marker id="arrow-soft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#B55B64"/>
+          </marker>
+        </defs>
+
+        <!-- Stage 1: Sources -->
+        <g class="node-group">
+          <rect x="20" y="40" width="180" height="60" rx="3" class="flow-box flow-source"/>
+          <text x="110" y="65" class="flow-label">LinkedIn · StepStone</text>
+          <text x="110" y="84" class="flow-label">Indeed · Xing</text>
+
+          <rect x="20" y="120" width="180" height="60" rx="3" class="flow-box flow-source"/>
+          <text x="110" y="145" class="flow-label">Company career pages</text>
+          <text x="110" y="164" class="flow-label">RSS / newsletter alerts</text>
+
+          <rect x="20" y="200" width="180" height="60" rx="3" class="flow-box flow-source"/>
+          <text x="110" y="225" class="flow-label">Niche job boards</text>
+          <text x="110" y="244" class="flow-label">(by industry / region)</text>
+
+          <text x="110" y="22" class="flow-stage-label">JOB ALERTS</text>
+        </g>
+
+        <!-- Stage 2: Gmail -->
+        <g>
+          <rect x="270" y="120" width="170" height="80" rx="3" class="flow-box flow-gmail"/>
+          <text x="355" y="155" class="flow-label flow-strong">Gmail</text>
+          <text x="355" y="178" class="flow-label-small">label: Jobs/Alerts</text>
+          <text x="355" y="100" class="flow-stage-label">INBOX</text>
+        </g>
+
+        <!-- Stage 3: Claude (the brain) -->
+        <g>
+          <rect x="510" y="80" width="200" height="160" rx="3" class="flow-box flow-claude"/>
+          <text x="610" y="115" class="flow-label flow-strong">Claude + Cowork</text>
+          <line x1="540" y1="130" x2="680" y2="130" class="flow-divider"/>
+          <text x="610" y="150" class="flow-label-small">runs Mon &amp; Thu 8am</text>
+          <text x="610" y="172" class="flow-label-small">reads emails</text>
+          <text x="610" y="190" class="flow-label-small">applies your rubric</text>
+          <text x="610" y="208" class="flow-label-small">reads your feedback</text>
+          <text x="610" y="226" class="flow-label-small">scores 0–100</text>
+          <text x="610" y="60" class="flow-stage-label">THE BRAIN</text>
+        </g>
+
+        <!-- Stage 4: Outputs -->
+        <g>
+          <rect x="780" y="50" width="180" height="80" rx="3" class="flow-box flow-output"/>
+          <text x="870" y="80" class="flow-label flow-strong">iMessage</text>
+          <text x="870" y="103" class="flow-label-small">top 3 picks · push notif</text>
+
+          <rect x="780" y="160" width="180" height="80" rx="3" class="flow-box flow-output"/>
+          <text x="870" y="190" class="flow-label flow-strong">Notion · Digest</text>
+          <text x="870" y="213" class="flow-label-small">full ranked list</text>
+
+          <text x="870" y="32" class="flow-stage-label">DELIVERY</text>
+        </g>
+
+        <!-- Stage 5: Feedback -->
+        <g>
+          <rect x="780" y="280" width="180" height="70" rx="3" class="flow-box flow-feedback"/>
+          <text x="870" y="310" class="flow-label flow-strong">Notion · Feedback</text>
+          <text x="870" y="332" class="flow-label-small">your free-text notes</text>
+          <text x="870" y="370" class="flow-stage-label-rose">YOUR LOOP</text>
+        </g>
+
+        <!-- Arrows: alerts → Gmail -->
+        <line x1="200" y1="70" x2="270" y2="135" class="flow-arrow" marker-end="url(#arrow)"/>
+        <line x1="200" y1="150" x2="270" y2="155" class="flow-arrow" marker-end="url(#arrow)"/>
+        <line x1="200" y1="230" x2="270" y2="180" class="flow-arrow" marker-end="url(#arrow)"/>
+
+        <!-- Arrow: Gmail → Claude -->
+        <line x1="440" y1="160" x2="510" y2="160" class="flow-arrow" marker-end="url(#arrow)"/>
+
+        <!-- Arrows: Claude → outputs -->
+        <line x1="710" y1="130" x2="780" y2="95" class="flow-arrow" marker-end="url(#arrow)"/>
+        <line x1="710" y1="190" x2="780" y2="195" class="flow-arrow" marker-end="url(#arrow)"/>
+
+        <!-- Feedback loop arrow: Feedback → Claude (curved, rose color) -->
+        <path d="M 780 315 Q 600 320 600 245" fill="none" class="flow-arrow-soft" marker-end="url(#arrow-soft)"/>
+        <text x="640" y="320" class="flow-loop-label">reads before next run</text>
+
+        <!-- User feedback arrow: outputs → Feedback -->
+        <path d="M 870 240 Q 870 260 870 280" fill="none" class="flow-arrow-soft" marker-end="url(#arrow-soft)"/>
+      </svg>
+    </figure>
+
     <nav class="toc">
       <h4>On this page</h4>
       <ol>
         <li><a href="#what">What it does</a></li>
-        <li><a href="#who">Who this is for</a></li>
-        <li><a href="#stack">The stack — and why this stack</a></li>
-        <li><a href="#fast">The 5-minute version</a></li>
-        <li><a href="#full">The 30-minute version</a></li>
-        <li><a href="#rubric">Designing the scoring rubric</a></li>
-        <li><a href="#example">Worked example: junior dev, Berlin</a></li>
-        <li><a href="#digest">The Notion digest format</a></li>
-        <li><a href="#tuning">Tuning, drift, and when to scrap it</a></li>
-        <li><a href="#limits">What this won't do</a></li>
+        <li><a href="#stack">The stack</a></li>
+        <li><a href="#setup">Setup, end to end</a></li>
+        <li><a href="#rubric">The rubric — the hard part</a></li>
+        <li><a href="#example">Worked example: Alex, junior dev, Berlin</a></li>
+        <li><a href="#delivery">Delivery: Notion + iMessage</a></li>
+        <li><a href="#schedule">Cowork scheduling: daily or twice a week?</a></li>
+        <li><a href="#feedback">The feedback loop</a></li>
+        <li><a href="#mistakes">Common mistakes</a></li>
+        <li><a href="#variations">Variations for different situations</a></li>
+        <li><a href="#limits">What this won't do — on purpose</a></li>
+        <li><a href="#next">What's next: CV review, interview prep, application tracker</a></li>
       </ol>
     </nav>
 
@@ -53,7 +148,7 @@
       <section id="what">
         <h2><span class="num">01</span>What it does</h2>
         <p>You sign up for job alerts on LinkedIn, StepStone, Indeed, Xing — the usual suspects. They flood your inbox. You skim a handful, file the rest under "I'll look later," and never look later.</p>
-        <p>This agent intercepts those alerts. It reads each job description, scores it against a rubric you wrote in plain language ("score higher if commute is under 40 minutes, lower if it requires 5+ years experience"), and twice a week posts a digest to Notion that looks like this:</p>
+        <p>This agent intercepts those alerts. It reads each job description, scores it against a rubric you wrote in plain language ("score higher if commute is under 40 minutes, lower if it requires 5+ years experience"), and twice a week sends a ranked digest — to a Notion page for the full version, and to iMessage as a push notification with the top 3:</p>
 
         <div class="digest" aria-hidden="true">
           <div class="digest-head">
@@ -86,133 +181,111 @@
           </div>
         </div>
 
-        <p>That's it. No new app. No browser extension. Email comes in, digest goes out.</p>
-      </section>
-
-      <section id="who">
-        <h2><span class="num">02</span>Who this is for</h2>
-        <ul>
-          <li><strong>Job seekers who get more alerts than they can read.</strong> If you're staring at 30 unread "5 new jobs for you" emails, this fixes that.</li>
-          <li><strong>People who know what they want but can't filter for it.</strong> Job boards filter by keyword; you need to filter by judgement ("would I actually apply to this?"). The agent does the second part.</li>
-          <li><strong>Anyone willing to write a 200-word rubric once.</strong> The setup is simple. The thinking is the work.</li>
-        </ul>
-        <p>If you're not sure what you want yet, build the agent anyway — its low-scoring rejections will teach you what you don't want, which is half the battle.</p>
+        <p>Then — and this is what makes it actually useful — you reply with what you thought. "This one looked great but the team is all senior, I'd be alone." "This one I applied to." "This one was recruiter spam." The agent reads your feedback before the next run and adjusts. The rubric becomes a living thing instead of a frozen guess.</p>
       </section>
 
       <section id="stack">
-        <h2><span class="num">03</span>The stack — and why this stack</h2>
-        <p>Three pieces, all free or near-free:</p>
+        <h2><span class="num">02</span>The stack</h2>
+        <p>Four pieces. All free or cheap:</p>
         <ul>
           <li><strong>Gmail</strong> — where the alerts arrive. A label routes them to the agent.</li>
-          <li><strong>Claude</strong> (with the Gmail and Notion connectors enabled) — the brain that reads, scores, and writes.</li>
-          <li><strong>Notion</strong> — where the digest lives. A simple page with a date heading per run.</li>
+          <li><strong>Claude with Cowork</strong> — the brain. Cowork is the part that lets the prompt run unattended on a schedule. Without it you'd be pasting the prompt manually every Monday.</li>
+          <li><strong>Notion</strong> — two pages. One for the digest. One for your feedback. Free.</li>
+          <li><strong>iMessage</strong> — push notification with the top picks. The reason you actually read the digest. Cowork can send messages to a phone number you've verified.</li>
         </ul>
-        <p>You can swap pieces. Outlook works instead of Gmail. Obsidian or a plain markdown file works instead of Notion. The pattern is what matters: <strong>label → agent → digest</strong>.</p>
-        <div class="callout">
-          <strong>Why not a custom script?</strong>
-          You could write Python that hits the Gmail API, runs an LLM call, posts to a Notion DB. It would be more reliable and harder to break. But it's also a project. This guide assumes you'd rather have it running by tonight than perfect by Christmas.
-        </div>
+        <p>If you're on Android, swap iMessage for Telegram or WhatsApp Web. The principle is the same: deliver the digest where you already look, not where you have to remember to go.</p>
       </section>
 
-      <section id="fast">
-        <h2><span class="num">04</span>The 5-minute version</h2>
-        <p>Before the full setup, try this. Open Claude. Forward yourself a job alert email. Then paste this prompt with the email pasted underneath:</p>
-
-<pre><code>You are a job-matching agent for a <span class="key">[junior frontend developer]</span> based
-in <span class="key">[Berlin-Tempelhof]</span>, looking for their first role.
-
-Score each job in the email below from 0–100 using this rubric:
-  - Match to "junior" or "entry-level" framing       (35 points)
-  - Tech stack overlap with React, TypeScript, HTML  (25 points)
-  - Commute under 40 minutes by public transit       (20 points)
-  - Salary disclosed and >= €40k                     (10 points)
-  - Mentorship, training, or junior program          (10 points)
-
-Output a markdown table: Role | Company | Score | One-line reason.
-Skip jobs scoring below 40 unless they're worth a stretch application.</code></pre>
-
-        <p>Hit send. You'll get a scored shortlist in 10 seconds.</p>
-        <p>If that output is useful, the rest of this guide is just <em>making it run automatically twice a week</em>. If the output is bad, the rubric needs work — go to <a href="#rubric">section 6</a> first.</p>
-      </section>
-
-      <section id="full">
-        <h2><span class="num">05</span>The 30-minute version</h2>
-        <p>The goal: alerts arrive Sunday and Wednesday nights. By Monday and Thursday morning, a digest is waiting in Notion. You only open Notion.</p>
+      <section id="setup">
+        <h2><span class="num">03</span>Setup, end to end</h2>
+        <p>Roughly 30 minutes if you've used Claude before, 45 if you haven't. Don't skip step 4 — the rubric is the whole thing.</p>
 
         <ol class="steps">
 
           <li>
             <strong>Set up a Gmail label and filter.</strong>
-            In Gmail, create a label called <code>Jobs/Alerts</code>. Then create a filter: <em>From: linkedin.com OR stepstone.de OR indeed.de OR xing.com</em> → apply label <code>Jobs/Alerts</code>, mark as read (so they don't clutter your inbox). Sign up for daily digests on each platform, with the keywords you actually care about. Don't over-filter at the platform level — let the agent do the filtering.
+            Create a label called <code>Jobs/Alerts</code>. Then create a filter: <em>From: linkedin.com OR stepstone.de OR indeed.de OR xing.com</em> → apply label, mark as read. Sign up for daily digests on each platform with your real keywords. Subscribe broadly — let the agent filter, not the platform.
           </li>
 
           <li>
-            <strong>Create the Notion destination.</strong>
-            In Notion, make a new page called <em>Job Digest</em>. That's it. The agent will append dated sections to it.
+            <strong>Create two Notion pages.</strong>
+            <em>Job Digest</em> — the agent appends a dated section here every run.
+            <em>Job Feedback</em> — empty for now. You write here after every digest. Free text. "Applied to Solarisbank." "Zalando looked good but they want 3 years exp." "Skip anything from recruiter X." This is the loop.
           </li>
 
           <li>
             <strong>Connect Claude to Gmail and Notion.</strong>
-            In Claude, go to Settings → Connectors. Enable Gmail and Notion. Authorise both. (If you don't see these, you may need a Pro plan — check the pricing page.)
+            Settings → Connectors. Enable Gmail and Notion. Authorise both. You'll need a paid plan for Cowork scheduled tasks — check the pricing page.
           </li>
 
           <li>
             <strong>Write your scoring rubric.</strong>
-            This is the only part that's actually hard. See <a href="#rubric">section 6</a>. Write it once, save it as a Notion page or a doc you can paste from.
+            See section 4. Write it once, save it as a Notion page you can paste from. Expect to rewrite it twice in the first month — that's normal.
           </li>
 
           <li>
-            <strong>Build the agent prompt.</strong>
-            Combine your rubric with this scaffold:
-<pre><code>You are my job-search agent. Your job runs twice a week.
+            <strong>Build the Cowork task.</strong>
+            Cowork → Schedule → New Task. Name it <em>Job Digest</em>. Frequency: every Monday and Thursday at 8 AM (see section 7 on why twice a week). Paste this prompt, replacing the rubric block with your own:
+<pre><code>You are my job-search agent. You run twice a week.
 
 WHAT TO READ:
-Search Gmail for emails with label "Jobs/Alerts" received
-in the last 4 days. Read all job listings inside.
+1. Search Gmail for emails labelled "Jobs/Alerts" from the last 4 days.
+2. Read every distinct job listing inside (deduplicate cross-postings).
+3. ALSO read the Notion page titled "Job Feedback" — every entry the
+   user has written since last run. Use this to adjust scoring.
 
 WHO I AM AND WHAT I WANT:
-[Paste your full rubric here — see section 6]
+[Paste your full rubric here — see section 4]
 
 WHAT TO DO:
-1. Extract every distinct job posting (deduplicate cross-postings).
-2. Score each from 0–100 using the rubric.
-3. Sort highest to lowest.
-4. For each job scoring 40+, write a one-paragraph "why" in plain
-   language — explain the fit AND any caveats.
-5. Group results: "Strong matches" (70+), "Worth applying" (50–69),
-   "Stretch / skip" (40–49).
-6. Append the result as a new section to the Notion page titled
-   "Job Digest", with today's date as the section heading.
+1. Score each job 0-100 using the rubric, modified by the latest feedback.
+2. Sort highest to lowest.
+3. For each job 40+, write a one-paragraph "why" — the fit AND the
+   caveats, in plain language.
+4. Group: Strong matches (70+), Worth applying (50-69), Stretch / skip
+   (40-49). Drop anything below 40.
+5. Append the result as a new dated section to the Notion page
+   "Job Digest".
+6. Send an iMessage to [your number]: top 3 only, with score and a
+   one-line reason each. End with: "Full digest in Notion."
+7. At the end of the Notion digest, add: "Feedback for next run? Add a
+   note to the Job Feedback page."
 
 TONE:
-Direct. No filler. If a role is a bad fit, say so in one sentence.</code></pre>
+Direct. No filler. If a role is bad, say so in one sentence.
+Don't write cover letters. Don't apply. Don't summarise — rank.</code></pre>
           </li>
 
           <li>
             <strong>Run it manually first.</strong>
-            Paste the prompt into Claude with both connectors active. Watch what it does. Read the Notion output. Tune the rubric — it will be wrong on the first run.
+            Don't wait for Monday. Trigger the task once, watch it work, read the output. The first run will be slightly wrong. Fix the rubric before you let it loose on the schedule.
           </li>
 
           <li>
-            <strong>Schedule it.</strong>
-            Two ways. The cleanest: use Claude's scheduled-task feature if your plan supports it (check Settings). The pragmatic alternative: set a recurring Mon/Thu 8:30 AM reminder on your phone titled "Run job digest" with a Claude.ai link — paste the prompt, hit send, get coffee. Takes 15 seconds.
+            <strong>Verify your phone for iMessage delivery.</strong>
+            In Cowork, add the phone number that should receive the digest. You'll get a one-time code to confirm. Pin the iMessage thread on your phone. From now on the digest arrives as a notification on Mon/Thu morning.
+          </li>
+
+          <li>
+            <strong>Write your first feedback entry.</strong>
+            After the first real digest, open <em>Job Feedback</em> and write three lines. "Applied to A. Skipped B because senior team. C looked spammy." This trains you to use the loop. The agent reads this on the next run.
           </li>
 
         </ol>
       </section>
 
       <section id="rubric">
-        <h2><span class="num">06</span>Designing the scoring rubric</h2>
+        <h2><span class="num">04</span>The rubric — the hard part</h2>
         <p>The rubric is the whole game. A bad rubric scores everything 70 and the digest is noise. A good rubric ranks ten jobs and the top three are obvious applies.</p>
 
         <h3>Three rules</h3>
         <p><strong>One: weights must add to 100.</strong> Forces you to choose what matters most. If "junior-friendly framing" is 35 points and "salary" is 10, you've made a real decision.</p>
         <p><strong>Two: every criterion must be observable in a job description.</strong> "Good company culture" is unscoreable. "Mentions mentorship, training program, or pair programming" is scoreable.</p>
-        <p><strong>Three: include at least one disqualifier.</strong> A criterion that, if missing, caps the score. For a junior, "requires 5+ years experience" should hard-cap the score around 30. For someone with kids, "fully on-site, no remote at all" might cap it.</p>
+        <p><strong>Three: include at least one disqualifier.</strong> A criterion that, if missing, caps the score. For a junior, "requires 5+ years experience" should hard-cap at 30. For someone with kids, "fully on-site, no remote at all" might cap.</p>
 
         <h3>The template</h3>
 <pre><code>WHO I AM
-[2–3 sentences. Role, location, level, what you're optimising for.]
+[2-3 sentences. Role, location, level, what you're optimising for.]
 
 DEAL-BREAKERS (auto-cap at 30)
 - [Thing that makes a job impossible for you]
@@ -233,8 +306,8 @@ NEVER SCORE ABOVE 50 IF
       </section>
 
       <section id="example">
-        <h2><span class="num">07</span>Worked example: junior dev, Berlin</h2>
-        <p>Meet our hypothetical user. Alex, 24, finished a 9-month bootcamp last autumn. Knows React, TypeScript, basic Node. No professional experience yet, two portfolio projects on GitHub. Lives in Neukölln, doesn't own a car, wants to be in an office at least 3 days a week ("I'll go mad working alone in my room"). Berlin only.</p>
+        <h2><span class="num">05</span>Worked example: Alex, junior dev, Berlin</h2>
+        <p>Meet our hypothetical user. Alex, 24, finished a 9-month bootcamp last autumn. Knows React, TypeScript, basic Node. No professional experience yet, two portfolio projects on GitHub. Lives in Neukölln, doesn't own a car, wants to be in an office at least 3 days a week ("I'll go mad alone in my room"). Berlin only.</p>
         <p>Here's Alex's filled-in rubric:</p>
 
 <pre><code>WHO I AM
@@ -260,8 +333,8 @@ SCORING (totals 100)
 
 - Commute from Neukölln under 40 min by transit    20
   Under 25 min: 20
-  25–40 min: 12
-  40–60 min: 5
+  25-40 min: 12
+  40-60 min: 5
   Over 60 min: 0
 
 - In-office or hybrid (2+ days/week)               10
@@ -285,51 +358,173 @@ NEVER SCORE ABOVE 50 IF
 - Company has fewer than 10 employees (early-stage risk for a
   first role; Alex needs structure)</code></pre>
 
-        <h3>How to translate this for yourself</h3>
-        <p>Three substitutions:</p>
+        <h3>Translating it for your own situation</h3>
         <ul>
-          <li><strong>"Who I am"</strong> — write the version that's actually true. Two sentences. If you can't write it, you don't know what you want.</li>
+          <li><strong>"Who I am"</strong> — write the version that's actually true. Two sentences. If you can't write it, you don't know what you want yet.</li>
           <li><strong>"Deal-breakers"</strong> — what would make you turn down a job in the first 30 seconds of reading? Those.</li>
           <li><strong>"Scoring"</strong> — five criteria max. If you have ten, you have noise. Force yourself to choose.</li>
         </ul>
-        <p>For a senior with kids, the scoring shifts — salary goes from 10 to 30, mentorship drops to 0, "remote OK" might add 15 points instead of subtracting. Same template, different weights. That's the point.</p>
       </section>
 
-      <section id="digest">
-        <h2><span class="num">08</span>The Notion digest format</h2>
-        <p>Format matters more than people think. A wall of text is unreadable on Monday morning. The format I use:</p>
-        <ul>
-          <li><strong>Date heading</strong> — bold, top of the section.</li>
-          <li><strong>Three buckets</strong>: Strong matches (70+), Worth applying (50–69), Stretch / skip (under 50). I usually only read the first two; the third is there in case I'm wrong about a deal-breaker.</li>
-          <li><strong>Per job</strong>: role + company on one line; score in a small badge; commute distance and salary as a meta line; one paragraph saying <em>why</em> the score is what it is.</li>
-        </ul>
-        <p>The "why" paragraph is where the agent earns its keep. A score is just a number — you can't argue with it. A reason is something you can either accept ("yeah, fair") or override ("the agent missed that this team lead is famously good with juniors, score should be higher"). The reason makes the agent <em>correctable</em>.</p>
+      <section id="delivery">
+        <h2><span class="num">06</span>Delivery: Notion + iMessage</h2>
+        <p>Where the digest lands matters as much as how good it is. If you have to remember to open it, you won't.</p>
 
+        <h3>iMessage — the short version</h3>
+        <p>Top 3 only. Role, company, score, one-line reason. Arrives as a notification on Mon/Thu morning. You read it in 20 seconds with coffee. If something looks promising, you tap into Notion for the full reasoning. If nothing does, you go on with your day.</p>
+        <p>Cowork sends the message to a phone number you've verified on your account. Use your own number, or share a thread with a partner if you're job hunting together. Don't deliver to your work Slack or your main email — those are full of noise, and the whole point of the digest is to be the *only* job-search signal you see twice a week.</p>
+
+        <h3>Notion — the long version</h3>
+        <p>The full digest with all jobs, scores, and reasoning. Append-only — every run becomes a new dated section, so you can scroll back and see what scored well two weeks ago. This is also where you write your feedback (separate page, not the digest itself).</p>
+
+        <h3>Cross-platform note</h3>
+        <p>iMessage is Apple-only. On Android, the same pattern works with Telegram (free, has bots), WhatsApp Web (cleaner UI), or even SMS via Twilio (~€0.05/message in Germany). The key is the delivery channel you actually look at, not the technology behind it.</p>
+      </section>
+
+      <section id="schedule">
+        <h2><span class="num">07</span>Cowork scheduling: daily or twice a week?</h2>
+        <p>People ask if it should run every day. Don't.</p>
+        <p><strong>Twice a week is right for most people.</strong> Mon morning catches the weekend's batch. Thu morning catches early-week postings while there's still time to apply before Friday afternoon. Two notifications, both actionable.</p>
+        <p><strong>Daily creates fatigue.</strong> Job alerts don't move that fast. Most postings stay open for 2–4 weeks. A daily digest starts feeling like spam by week two, and you stop opening it. Once the digest becomes ignorable, the loop is dead.</p>
+        <p><strong>Once a week is fine for senior roles.</strong> If you're 8+ years in, the role density is lower and you're not in a rush — Monday morning only is plenty.</p>
+        <p>If you genuinely have a deadline ("I need to leave my current job in 60 days"), bump to three times a week — Mon, Wed, Fri. Beyond that, the agent isn't your bottleneck, your application throughput is.</p>
         <div class="callout">
-          <strong>Trap to avoid</strong>
-          Don't ask the agent to write the cover letter. Two reasons. One: it'll be generic. Two: writing the cover letter is when you decide whether you actually want the job. Outsource the filtering, not the deciding.
+          <strong>Adjusting frequency mid-search</strong>
+          You can change the schedule any time in Cowork. I usually recommend starting with twice weekly, dropping to once if you're getting too many results, bumping to three if you're getting too few. The rubric should be the dial you turn most, not the schedule.
         </div>
       </section>
 
-      <section id="tuning">
-        <h2><span class="num">09</span>Tuning, drift, and when to scrap it</h2>
-        <p>The rubric you write in week one will be wrong. Expect this.</p>
-        <p><strong>Week 2: tune the weights.</strong> If everything is scoring 60–80, your rubric is too generous — increase the deal-breakers. If nothing is scoring above 50, you're being too strict — relax one criterion or drop a hard cap.</p>
-        <p><strong>Week 3: add what you missed.</strong> You'll notice you keep mentally rejecting jobs for a reason that's not in the rubric ("I keep skipping anything with 'fast-paced' in the description"). Add it. The rubric is a living document.</p>
-        <p><strong>Week 4: review the strong matches you didn't apply to.</strong> If a job scored 85 and you ignored it, your rubric is rewarding the wrong things. Find the disconnect and fix it.</p>
-        <p><strong>Scrap it when you have a job.</strong> Or scrap it after a month if you're not applying to the high-scoring matches — the problem isn't filtering, it's something else (motivation, fit doubt, CV) and an agent won't fix that.</p>
+      <section id="feedback">
+        <h2><span class="num">08</span>The feedback loop — how it gets smarter</h2>
+        <p>This is what separates a useful agent from a glorified email filter. The rubric you write in week one will be wrong — not catastrophically, but wrong in ways you only see once you've read 30 scored jobs. The feedback loop fixes the rubric for you, in plain language, without forcing you to rewrite it.</p>
+
+        <h3>How it works</h3>
+        <p>Every run, the agent reads your feedback page <em>before</em> scoring. New entries since last run get treated as additions to the rubric. You write:</p>
+
+<pre><code>Mon 27 Apr — Skipped the Solarisbank one even though it scored 87.
+Reason: read the JD again, the team is 6 seniors. I'd be the only
+junior. Score that lower next time. Add a criterion: ratio of
+junior-to-senior on the team if mentioned.
+
+Mon 27 Apr — Applied to Zalando. Tailored cover letter, took an
+hour. Worth doing again for similar matches.
+
+Thu 30 Apr — That recruiter agency "TechHire" sent the same role
+under three different titles. Filter their domain at Gmail level,
+not here.</code></pre>
+
+        <p>And the agent, on the next run, will:</p>
+        <ul>
+          <li>Score down jobs where the team composition signals lone-junior risk</li>
+          <li>Treat your "applied" notes as confirmation that high-scoring matches are working — not change anything</li>
+          <li>Flag the recruiter issue for you to fix at Gmail filter level (not pretend it can fix it itself)</li>
+        </ul>
+
+        <h3>What feedback is good for</h3>
+        <ul>
+          <li><strong>Correcting the rubric</strong> — "I keep skipping anything that says fast-paced" → add it as a soft cap.</li>
+          <li><strong>Tracking what you applied to</strong> — informal, just a line. Notion is fine for this.</li>
+          <li><strong>Calibration drift</strong> — "everything is scoring 60–80" → ask the agent to spread scores more aggressively.</li>
+          <li><strong>Things the agent can't see</strong> — interview vibes, recruiter behaviour, Glassdoor reviews you read.</li>
+        </ul>
+
+        <h3>What feedback is NOT good for</h3>
+        <ul>
+          <li><strong>Long structured forms.</strong> Free text. Three lines per entry max. The moment it feels like work, you stop, and the loop dies.</li>
+          <li><strong>Detailed application tracking.</strong> If you want a real CRM, use a separate Notion database with columns. The feedback page is for *adjusting the agent*, not project-managing your search.</li>
+          <li><strong>Asking the agent to write your cover letter.</strong> Don't. See section 11.</li>
+        </ul>
+
+        <div class="callout">
+          <strong>The unfair advantage</strong>
+          After three weeks, your agent's scoring will be sharper than any job board's "recommended for you" engine — because it has feedback from one specific person (you), not aggregate behaviour from millions. That's the whole reason this is worth building.
+        </div>
+      </section>
+
+      <section id="mistakes">
+        <h2><span class="num">09</span>Common mistakes</h2>
+
+        <h3>"Everything scores 70."</h3>
+        <p>Your rubric is too generous. Look at the weights — are three different criteria all worth 30+ points? You're rewarding presence, not selectivity. Tighten one criterion to be binary, and add a "never above 50 if" clause.</p>
+
+        <h3>"Nothing scores above 40."</h3>
+        <p>Too many deal-breakers, or they're too vague. "Bad company culture" can't be a deal-breaker — the agent can't see culture in a JD. Replace with something observable like "team size under 10."</p>
+
+        <h3>"The top result is always one I'd never apply to."</h3>
+        <p>The rubric rewards the wrong things. Look at the top match — what scored high that shouldn't have? That's your missing "never above 50 if." Add it. Try again Monday.</p>
+
+        <h3>"I forget to write feedback."</h3>
+        <p>The digest itself reminds you (the prompt has the line "Feedback for next run?"). If you still forget, the issue isn't memory — it's that you're not actually job hunting. The agent runs forever; the loop only matters if you're applying.</p>
+
+        <h3>"The agent is summarising instead of ranking."</h3>
+        <p>You wrote a soft prompt. Add explicit language: "Don't summarise. Don't be balanced. Sort, score, cut." Be rude to the agent — it works.</p>
+
+        <h3>"It surfaces the same jobs every run."</h3>
+        <p>Cross-posting on multiple platforms means deduplication is failing. Add to the prompt: "Deduplicate by company + role title + city. If a posting appeared in a previous digest (check the Notion Job Digest page for the last 14 days), skip it unless the score has changed by more than 10 points."</p>
+      </section>
+
+      <section id="variations">
+        <h2><span class="num">10</span>Variations for different situations</h2>
+        <p>Same template, different weights. Don't copy these blindly — translate them to your own facts.</p>
+
+        <h3>Senior with kids</h3>
+        <p>Salary becomes a foundation, not a tiebreaker. Weight it 25–30. Mentorship goes to zero (you're the mentor now). Add "school-run-friendly hours" or "core hours flexible" as a 15-point criterion. Remote-friendly becomes a positive (+10), not a negative. Deal-breaker: anything labelled "fast-paced startup" or "wear many hats" — code for unsustainable hours.</p>
+
+        <h3>Career switcher into tech (no professional dev experience)</h3>
+        <p>You're Alex's harder-mode cousin. Weight "junior-friendly framing" up to 40. Add a hard "never above 50 if" for anything requiring a CS degree. Drop tech-stack-match if your stack is broad — companies care about your trajectory, not your toolbelt. Add bonus points for "we hire from non-traditional backgrounds" language.</p>
+
+        <h3>Visa-needed, EU-wide</h3>
+        <p>Geography opens up but visa sponsorship becomes the gatekeeper. Make "explicit visa sponsorship advertised" a 30-point criterion, not a +5 bonus. Hard-cap at 20 if visa sponsorship is unmentioned (most places will silently reject sponsorship requests). Drop commute entirely; replace with "company has demonstrated history of hiring non-EU candidates" — observable through Glassdoor and LinkedIn employee profiles.</p>
+
+        <h3>Remote-first, EU-wide</h3>
+        <p>Commute drops to zero. Time-zone overlap becomes the new commute (15 points: "Berlin time zone ±2 hours"). Salary band transparency becomes a soft cap — most remote companies post salary bands; the ones that don't are usually paying less than you'd accept. Deal-breaker: companies requiring "occasional travel to HQ" if HQ is a 10-hour flight away — they'll quietly start expecting it monthly.</p>
       </section>
 
       <section id="limits">
-        <h2><span class="num">10</span>What this won't do</h2>
+        <h2><span class="num">11</span>What this won't do — on purpose</h2>
         <ul>
-          <li><strong>It won't apply for you.</strong> By design. Applying is a decision, not a task.</li>
-          <li><strong>It won't find jobs that aren't in your inbox.</strong> Garbage alerts in, garbage digest out. Subscribe broadly.</li>
-          <li><strong>It won't replace networking.</strong> The best jobs are filled before they're posted. The agent helps with the 70% that go through job boards.</li>
+          <li><strong>It won't apply for you.</strong> Applying is a decision, not a task. The friction is also the filter that stops you from spamming.</li>
+          <li><strong>It won't write your cover letter.</strong> Don't. AI-generated cover letters are already what recruiters complain about most — the signal is dead. The cover letter is where the human makes the case for the human. Outsource the filtering. Never outsource the asking.</li>
+          <li><strong>It won't fine-tune your CV per job.</strong> Same reason. Tailor your CV by hand for the top 2–3 jobs you actually want. The rest of the time, your generic CV is fine.</li>
+          <li><strong>It won't find jobs that aren't in your inbox.</strong> Garbage alerts in, garbage digest out. Subscribe broadly to good sources.</li>
+          <li><strong>It won't replace networking.</strong> The best jobs are filled before they're posted. The agent helps with the ~70% that go through job boards.</li>
           <li><strong>It won't keep you motivated.</strong> A digest doesn't apply itself. If your problem is "I have 12 high-scoring matches and haven't applied to any," the agent isn't the issue.</li>
         </ul>
-        <p>That's it. Build it, tune it for two weeks, then forget it's there until you have a job offer.</p>
-        <p style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--rule); font-style: italic; color: var(--ink-muted);">If you build a version of this and it works for you, I'd genuinely like to hear about it. Find me on <a href="https://github.com/mexiro">GitHub</a>.</p>
+      </section>
+
+      <section id="next">
+        <h2><span class="num">12</span>What's next</h2>
+        <p>The Job Search Agent is one piece of a larger system. The full job-landing pipeline has four stages, and the agent only owns the first one. Future builds in this journal will cover the rest:</p>
+
+        <div class="next-grid">
+          <div class="next-card">
+            <span class="next-tag">Stage 1 · This build</span>
+            <h3>Filter the noise</h3>
+            <p>What you just read. Get from 200 alerts a week down to 5 ranked picks delivered to your phone.</p>
+          </div>
+
+          <div class="next-card next-coming">
+            <span class="next-tag">Stage 2 · Coming next</span>
+            <h3>CV review agent</h3>
+            <p>Paste a job description and your CV. The agent critiques the CV against that specific role — gaps, weak claims, missing keywords for ATS — without rewriting it for you. Use it on your top 2–3 applications, not all of them.</p>
+          </div>
+
+          <div class="next-card next-coming">
+            <span class="next-tag">Stage 3 · Later</span>
+            <h3>Interview prep agent</h3>
+            <p>Same input (JD + CV). Agent generates the 8–10 questions most likely to come up, grills you on each one, and gives feedback on your answers. Especially useful for technical screens and behavioural rounds you can rehearse.</p>
+          </div>
+
+          <div class="next-card next-coming">
+            <span class="next-tag">Stage 4 · Later</span>
+            <h3>Application tracker</h3>
+            <p>Notion database template, not an app. Columns for company, role, status, next action, follow-up date. Boring on purpose. The point is to never lose track of where you applied and when to follow up — most candidates lose interviews to silence, not rejection.</p>
+          </div>
+        </div>
+
+        <p style="margin-top: 2rem;">Each one stands alone. Each one solves one specific problem. Together they cover the journey from "noisy inbox" to "signed offer." If you want me to ping you when the next one ships, email me below — I'll keep a small list, no newsletter, just a heads-up when there's something new.</p>
+
+        <p style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--rule); font-style: italic; color: var(--ink-muted);">If you build a version of this and it works — or breaks in interesting ways — I'd genuinely like to hear about it. Email me at <a href="mailto:emaxhari@gmail.com">emaxhari@gmail.com</a> or find me on <a href="https://github.com/mexiro">GitHub</a>.</p>
       </section>
 
     </div>

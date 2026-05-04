@@ -677,3 +677,183 @@ footer a:hover { color: var(--accent); }
   .article-head .byline { flex-wrap: wrap; gap: 0.5rem 1.5rem; }
   .article-head .byline span:not(:first-child)::before { display: none; }
 }
+
+/* ===== Flow diagram ===== */
+.flow {
+  margin: 0 0 4rem;
+  padding: 2rem 1.5rem 1.5rem;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow-x: auto;
+}
+
+.flow figcaption {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-muted);
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.flow svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-width: 720px;
+}
+
+.flow-box {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+
+.flow-source {
+  fill: var(--paper-deep);
+  stroke: var(--ink-muted);
+  stroke-width: 1;
+}
+
+.flow-gmail {
+  fill: #fff;
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+
+.flow-claude {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.flow-output {
+  fill: #fff;
+  stroke: var(--accent);
+  stroke-width: 1.2;
+}
+
+.flow-feedback {
+  fill: var(--highlight-soft);
+  stroke: var(--highlight);
+  stroke-width: 1.2;
+}
+
+.flow-divider {
+  stroke: var(--accent);
+  stroke-width: 0.8;
+  opacity: 0.4;
+}
+
+.flow-arrow {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.flow-arrow-soft {
+  stroke: var(--highlight);
+  stroke-width: 1.5;
+  fill: none;
+  stroke-dasharray: 4 3;
+}
+
+.flow-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+
+.flow-strong {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.flow-label-small {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--ink-soft);
+  text-anchor: middle;
+}
+
+.flow-stage-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  fill: var(--ink-muted);
+  text-anchor: middle;
+  text-transform: uppercase;
+}
+
+.flow-stage-label-rose {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  fill: var(--highlight);
+  text-anchor: middle;
+  text-transform: uppercase;
+}
+
+.flow-loop-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--highlight);
+  text-anchor: middle;
+  font-style: italic;
+}
+
+/* ===== What's next cards ===== */
+.next-grid {
+  display: grid;
+  gap: 1rem;
+  margin: 2rem 0 1rem;
+}
+
+@media (min-width: 600px) {
+  .next-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.next-card {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  padding: 1.25rem 1.4rem;
+}
+
+.next-card.next-coming {
+  border-left-color: var(--ink-muted);
+  opacity: 0.85;
+}
+
+.next-card .next-tag {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.next-card.next-coming .next-tag { color: var(--ink-muted); }
+
+.next-card h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  margin: 0 0 0.5rem;
+}
+
+.next-card p {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .flow { padding: 1.25rem 0.5rem; }
+  .flow svg { min-width: 700px; }
+}
