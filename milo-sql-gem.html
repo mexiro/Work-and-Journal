@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Milo — the SQL Gem — Erion's Builds</title>
+<meta name="description" content="A Gemini Gem that writes Redshift SQL against a known schema with ~90% first-prompt accuracy. How to give an LLM a database without it hallucinating columns." />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="shell">
+
+  <header class="topnav">
+    <a class="brand" href="index.html">Erion's <em>Builds</em></a>
+    <nav>
+      <a href="index.html">Index</a>
+      <a href="https://mexiro.github.io/erionmaxhari" target="_blank" rel="noopener">About</a>
+    </nav>
+  </header>
+
+  <article>
+
+    <header class="article-head">
+      <div class="kicker">Build No. 02 · SQL Agent</div>
+      <h1>Milo — <em>the SQL Gem that doesn't hallucinate columns.</em></h1>
+      <p class="standfirst">Give an LLM your database schema and ask it to write queries. It will invent tables. Milo doesn't — here's how, and why the anti-hallucination rules matter more than the schema itself.</p>
+      <div class="byline">
+        <span>By Erion Maxhari</span>
+        <span>45-min setup</span>
+        <span>Gemini + your schema DDL</span>
+      </div>
+    </header>
+
+    <nav class="toc">
+      <h4>On this page</h4>
+      <ol>
+        <li><a href="#problem">The problem: LLMs invent database columns</a></li>
+        <li><a href="#approach">The approach: schema + anti-hallucination rules</a></li>
+        <li><a href="#setup">Setting up the Gem</a></li>
+        <li><a href="#schema">Preparing your schema DDL</a></li>
+        <li><a href="#rules">The anti-hallucination rules</a></li>
+        <li><a href="#testing">Testing and measuring accuracy</a></li>
+        <li><a href="#example">Worked example: querying a transactions table</a></li>
+        <li><a href="#limits">Limitations and when Milo breaks</a></li>
+      </ol>
+    </nav>
+
+    <div class="body read">
+
+      <!-- ============================================================
+           CONTENT PLACEHOLDER
+           ============================================================
+           Erion — fill this in when you're ready to publish Build 02.
+           Keep the same structure as job-search-agent.html:
+           - One <section> per TOC entry, with matching id
+           - Use <h2><span class="num">01</span>Title</h2> for headers
+           - Use <pre><code> for prompts and SQL
+           - Use <div class="callout"> for asides
+           - Use <ol class="steps"> for step-by-step instructions
+
+           Delete this comment block when you start writing.
+           ============================================================ -->
+
+      <section id="problem">
+        <h2><span class="num">01</span>The problem</h2>
+        <p><em>This build is in draft. Content coming soon.</em></p>
+        <p>In the meantime, the pattern is straightforward: you give a Gemini Gem your full schema DDL, add a set of rules that explicitly tell it which tables and columns exist and forbid guessing, and the result is a SQL-writing assistant that hits ~90% accuracy on the first prompt. The details — the rules, the schema format, the edge cases — are what make the difference between 60% and 90%.</p>
+      </section>
+
+    </div>
+
+  </article>
+
+</div>
+
+<footer>
+  <span>Erion Maxhari · Berlin</span>
+  <span><a href="index.html">← Back to index</a></span>
+</footer>
+
+</body>
+</html>
